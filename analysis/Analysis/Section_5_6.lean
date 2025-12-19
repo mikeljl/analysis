@@ -196,9 +196,14 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
   lift a to ℕ using by order
   lift a' to ℕ using by order
   norm_cast at *
+  have ha_ge : a ≥ 1 := by omega
+  have ha'_ge : a' ≥ 1 := by omega
   set y := x.root (a*b')
   have h1 : y = (x.root b').root a := by rw [root_root, mul_comm] <;> linarith
-  have h2 : y = (x.root b).root a' := by rw [root_root, mul_comm, ←hq] <;> linarith
+  have h2 : y = (x.root b).root a' := by
+    rw [root_root (by linarith : x ≥ 0) (by linarith : b ≥ 1) ha'_ge]
+    show y = x.root (b * a')
+    rw [hq.symm]
   have h3 : y^a = x.root b' := by rw [h1]; apply pow_of_root (root_nonneg _ _) <;> linarith
   have h4 : y^a' = x.root b := by rw [h2]; apply pow_of_root (root_nonneg _ _) <;> linarith
   rw [←h3, pow_mul, mul_comm, ←pow_mul, h4]
