@@ -1092,8 +1092,7 @@ private lemma Lebesgue_measure.countable_union_bounded {d:ℕ} (hd : 0 < d)
       have h_sum : Summable (fun n => ε / (2 : ℝ)^(n+1)) := by
         have h_eq_fn : (fun n => ε / (2 : ℝ)^(n+1)) = (fun n => ε/2 * (1/2 : ℝ)^n) := by
           ext n
-          have h2 : (2 : ℝ) ^ (n+1) = 2 * 2^n := by ring
-          field_simp [h2]
+          rw [pow_succ, mul_comm, div_mul_eq_div_div, one_div, inv_pow, div_eq_mul_inv]
         rw [h_eq_fn]
         exact summable_geometric_two.mul_left (ε/2)
       simp_rw [h_eq, ← EReal.coe_tsum_of_nonneg h_nn h_sum, tsum_geometric_eps ε hε]

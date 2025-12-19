@@ -1133,6 +1133,7 @@ lemma subdivide_iter_side_grid {d:ℕ} (B : Box d) (hB : B.toSet.Nonempty) (k : 
           rw [h2k]
           have h2k_ne : (2 : ℝ) ^ k ≠ 0 := by positivity
           field_simp [h2k_ne]
+          simp only [Nat.cast_add, Nat.cast_one, Nat.cast_mul, Nat.cast_ofNat]
           ring
         · -- Degenerate case: impossible for nonempty boxes (all sides have a ≤ b)
           -- B'' is nonempty since B is nonempty
@@ -1154,6 +1155,7 @@ lemma subdivide_iter_side_grid {d:ℕ} (B : Box d) (hB : B.toSet.Nonempty) (k : 
         rw [h2k]
         have h2k_ne : (2 : ℝ) ^ k ≠ 0 := by positivity
         field_simp [h2k_ne]
+        simp only [Nat.cast_mul, Nat.cast_ofNat]
         ring
 
 /-- Volume is preserved through iterative subdivision -/
@@ -2161,7 +2163,10 @@ lemma tsum_geometric_inflate {δ : ℝ} (_hδ : 0 < δ) :
     ext n
     have : (2 : ℝ)^(n+2) = 4 * 2^n := by ring
     rw [this]
-    field_simp
+    have h2n_ne : (2 : ℝ)^n ≠ 0 := pow_ne_zero n (by norm_num)
+    field_simp [h2n_ne]
+    rw [div_pow, one_pow, one_div]
+    exact (mul_inv_cancel₀ h2n_ne).symm
   rw [h_eq, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num : (0:ℝ) ≤ 1/2) (by norm_num : (1:ℝ)/2 < 1)]
   field_simp; ring
 /-- When P_nonempty ⊆ P, the loss from scaling is bounded by δ/4. -/
@@ -2174,7 +2179,7 @@ lemma card_ratio_bound {P_nonempty P : Finset α} (hP_nonempty_sub : P_nonempty 
   calc P_nonempty.card * (δ / (4 * P.card))
       ≤ P.card * (δ / (4 * P.card)) := by
         apply mul_le_mul_of_nonneg_right (Nat.cast_le.mpr h_card_bound) h_div_nonneg
-    _ = δ / 4 := by field_simp [hP_card_pos.ne.symm]; ring
+    _ = δ / 4 := by field_simp [hP_card_pos.ne.symm];
 
 /-- Sum bound from partition filter: if volumes B' satisfy B.vol ≤ B'.vol + ε,
     then summing over P_nonempty gives total bound with card * ε term. -/
@@ -2852,7 +2857,10 @@ lemma measure_le_cover_sum {d : ℕ} (_hd : 0 < d) {E : Set (EuclideanSpace' d)}
             Summable.mul_left (δ / 4) (summable_geometric_of_lt_one (by norm_num : (0 : ℝ) ≤ 1/2) (by norm_num : (1/2 : ℝ) < 1))
           refine Summable.congr this ?_
           intro n; field_simp; ring_nf
-          left; trivial
+          have : (1 / 2 : ℝ) ^ n * 2 ^ n = 1 := by
+            rw [div_pow, div_mul_eq_mul_div, one_pow, one_mul, div_self]
+            exact pow_ne_zero n (by norm_num : (2:ℝ) ≠ 0)
+          rw [this]; ring
         rw [← h_geom]
         -- Convert: ∑' real.toEReal = (∑' real).toEReal for summable nonneg
         symm
@@ -3171,6 +3179,10 @@ lemma tsum_geometric_eps (ε : ℝ) (_hε : 0 < ε) : ∑' n : ℕ, ε / 2^(n+1)
     have : (2:ℝ)^(n+1) = 2 * 2^n := by ring
     rw [this]
     field_simp
+    have : (1 / 2 : ℝ) ^ n * 2 ^ n = 1 := by
+      rw [div_pow, div_mul_eq_mul_div, one_pow, one_mul, div_self]
+      exact pow_ne_zero n (by norm_num : (2:ℝ) ≠ 0)
+    rw [mul_comm, this]
   rw [h_eq, tsum_mul_left, tsum_geometric_of_lt_one (by norm_num) (by norm_num)]
   ring
 
@@ -3185,7 +3197,10 @@ lemma tsum_interval_summable (ε : ℝ) : Summable (fun n => 2 * ε / 2^(n+1) : 
   have h_eq : (fun n => 2 * ε / 2^(n+1)) = (fun n => ε * (1/2 : ℝ)^n) := by
     ext n
     have h_pow : (2:ℝ)^(n+1) = 2 * 2^n := by ring
-    field_simp [h_pow]; ring
+    rw [h_pow, mul_comm 2 (2^n)]
+    field_simp
+    rw [div_pow, one_pow]
+    field_simp
   rw [h_eq]
   have h_abs : |(1/2:ℝ)| < 1 := by
     simp only [abs_of_pos (by norm_num : (0:ℝ) < 1/2)]
@@ -4352,7 +4367,10 @@ lemma DyadicCube.isCube {d:ℕ} (n:ℤ) (a: Fin d → ℤ) : IsCube (DyadicCube 
   intro i
   simp only [DyadicCube, BoundedInterval.length, BoundedInterval.b, BoundedInterval.a]
   -- Show ((a i + 1)/2^n - a i/2^n) = 1/2^n
-  have h : (↑(a i) + 1) / (2:ℝ) ^ n - ↑(a i) / (2:ℝ) ^ n = (2:ℝ) ^ (-n) := by field_simp
+  have h : (↑(a i) + 1) / (2:ℝ) ^ n - ↑(a i) / (2:ℝ) ^ n = (2:ℝ) ^ (-n) := by
+    field_simp
+    ring
+    rw [← zpow_add₀ (by norm_num : (2:ℝ) ≠ 0), add_neg_cancel, zpow_zero]
   rw [h]
   simp only [max_eq_left (zpow_nonneg (by norm_num : (0:ℝ) ≤ 2) (-n))]
   exact (abs_of_nonneg (zpow_nonneg (by norm_num : (0:ℝ) ≤ 2) (-n))).symm
@@ -4375,7 +4393,10 @@ namespace DyadicCube
 lemma sidelength {d:ℕ} (n:ℤ) (a: Fin d → ℤ) (i : Fin d) :
     |(DyadicCube n a).side i|ₗ = (2:ℝ)^(-n) := by
   simp only [DyadicCube, BoundedInterval.length, BoundedInterval.b, BoundedInterval.a]
-  have h : (↑(a i) + 1) / (2:ℝ) ^ n - ↑(a i) / (2:ℝ) ^ n = (2:ℝ) ^ (-n) := by field_simp
+  have h : (↑(a i) + 1) / (2:ℝ) ^ n - ↑(a i) / (2:ℝ) ^ n = (2:ℝ) ^ (-n) := by
+    field_simp
+    ring
+    rw [← zpow_add₀ (by norm_num : (2:ℝ) ≠ 0), add_neg_cancel, zpow_zero]
   rw [h, max_eq_left (zpow_nonneg (by norm_num : (0:ℝ) ≤ 2) (-n))]
 
 /-- Dyadic cubes at scale n ≥ 0 have sidelength at most 1. -/
@@ -4851,10 +4872,17 @@ lemma dyadicCubeLargerNotInSmaller {d:ℕ} (hd : 0 < d) {n m : ℤ} (hnm : n < m
   have h_len_sub : (2:ℝ)^(-n) ≤ (2:ℝ)^(-m) := by
     have h2n_pos : (0:ℝ) < 2^n := zpow_pos (by norm_num) n
     have h2m_pos : (0:ℝ) < 2^m := zpow_pos (by norm_num) m
-    calc (2:ℝ)^(-n) = ((a i : ℝ) + 1) / 2^n - (a i : ℝ) / 2^n := by field_simp
-      _ ≤ ((b i : ℝ) + 1) / 2^m - (b i : ℝ) / 2^m := by linarith [h_left_in.1, h_right_in.2]
-      _ = (2:ℝ)^(-m) := by field_simp
-  linarith
+    have h_eq_n : (2:ℝ)^(-n) = ((a i : ℝ) + 1) / 2^n - (a i : ℝ) / 2^n := by
+      rw [zpow_neg]
+      field_simp
+      ring
+    have h_eq_m : (2:ℝ)^(-m) = ((b i : ℝ) + 1) / 2^m - (b i : ℝ) / 2^m := by
+      rw [zpow_neg]
+      field_simp
+      ring
+    rw [h_eq_n, h_eq_m]
+    linarith [h_left_in.1, h_right_in.2]
+  linarith [h_side_ineq, h_len_sub]
 
 /-- Lemma 1.2.11: Every open set is a countable union of almost disjoint dyadic cubes.
 Note: every dyadic cube is nonempty
@@ -5371,7 +5399,11 @@ theorem Lebesgue_outer_measure.eq {d:ℕ} (E: Set (EuclideanSpace' d)) : Lebesgu
             have h_two_pow_pos : (0 : ℝ) < 2^(n+1) := by positivity
             have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := h_two_pow_pos.ne'
             field_simp [h_two_pow_ne]
-            left
+            -- Goal: 4 = 2 * 2^(n+1) * (1/2)^n
+            rw [div_pow, pow_succ, one_pow]
+            -- Now: 4 = 2 * (2^n * 2) * (1 / 2^n)
+            have h_2n_ne : (2:ℝ)^n ≠ 0 := pow_ne_zero n (by norm_num)
+            field_simp [h_2n_ne]
             ring
           rw [h_eq]
           exact h_summable_base.mul_left (ε / 4)
@@ -5425,7 +5457,10 @@ theorem Lebesgue_outer_measure.eq {d:ℕ} (E: Set (EuclideanSpace' d)) : Lebesgu
             have h_eq : (fun n : ℕ => (ε/2) / 2 ^ (n + 1)) = (fun n : ℕ => (ε / 4) * (1/2)^n) := by
               ext n
               have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := by positivity
-              field_simp [h_two_pow_ne]; left; ring
+              rw [div_pow, pow_succ, one_pow]
+              have h_2n_ne : (2:ℝ)^n ≠ 0 := pow_ne_zero n (by norm_num)
+              field_simp [h_two_pow_ne, h_2n_ne]
+              ring
             rw [h_eq]
             exact h_summable_base.mul_left (ε / 4)
           have h_B_summable : Summable (fun n => (B n).volume) := by
@@ -5456,7 +5491,10 @@ theorem Lebesgue_outer_measure.eq {d:ℕ} (E: Set (EuclideanSpace' d)) : Lebesgu
           have h_eq : (fun n : ℕ => (ε/2) / 2 ^ (n + 1)) = (fun n : ℕ => (ε / 4) * (1/2)^n) := by
             ext n
             have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := by positivity
-            field_simp [h_two_pow_ne]; left; ring
+            rw [div_pow, pow_succ, one_pow]
+            have h_2n_ne : (2:ℝ)^n ≠ 0 := pow_ne_zero n (by norm_num)
+            field_simp [h_two_pow_ne, h_2n_ne]
+            ring
           rw [h_eq]
           exact h_summable_base.mul_left (ε / 4)
         have h_B_summable : Summable (fun n => (B n).volume) := by
@@ -5497,12 +5535,20 @@ theorem Lebesgue_outer_measure.eq {d:ℕ} (E: Set (EuclideanSpace' d)) : Lebesgu
           have h_eq : (fun n : ℕ => (ε/2) / 2 ^ (n + 1)) = (fun n : ℕ => (ε / 4) * (1/2)^n) := by
             ext n
             have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := by positivity
-            field_simp [h_two_pow_ne]; left; ring
+            rw [div_pow, pow_succ, one_pow]
+            have h_2n_ne : (2:ℝ)^n ≠ 0 := pow_ne_zero n (by norm_num)
+            field_simp [h_two_pow_ne, h_2n_ne]
+            ring
           rw [h_eq]
           exact h_summable_base.mul_left (ε / 4)
         have h_real_sum : ∑' n : ℕ, (ε/2) / 2^(n+1) = ε/2 := by
           have h_eq : (fun n : ℕ => (ε/2) / 2^(n+1)) = (fun n : ℕ => (ε/2) * (1/2)^(n+1)) := by
-            ext n; field_simp
+            ext n
+            have h_two_pow_ne : (2 : ℝ)^(n+1) ≠ 0 := by positivity
+            field_simp [h_two_pow_ne]
+            rw [div_pow, pow_succ, one_pow]
+            have h_2n_ne : (2:ℝ)^n ≠ 0 := pow_ne_zero n (by norm_num)
+            field_simp [h_2n_ne]
           rw [h_eq, tsum_mul_left]
           have h_geom_sum_one : ∑' n : ℕ, (1/2 : ℝ)^(n+1) = 1 := by
             have h_summable : Summable (fun n : ℕ => (1/2 : ℝ)^n) :=
