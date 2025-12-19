@@ -53,11 +53,11 @@ theorem BddOn.of_continuous_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf: 
   -- This proof is written to follow the structure of the original text.
   by_contra! hunbound; simp [BddOn] at hunbound
   set x := fun (n:ℕ) ↦ (hunbound n).choose
-  have hx (n:ℕ) : a ≤ x n ∧ x n ≤ b ∧ n < |f (x n)| := (hunbound n).choose_spec
+  have hx (n:ℕ) : (a ≤ x n ∧ x n ≤ b) ∧ n < |f (x n)| := (hunbound n).choose_spec
   set X := Set.Icc a b
   observe hXclosed : IsClosed X
   observe hXbounded : Bornology.IsBounded X
-  have haX (n:ℕ): x n ∈ X := by simp [X]; specialize hx n; grind
+  have haX (n:ℕ): x n ∈ X := by simp [X, hx n]
   have ⟨ n, hn, ⟨ L, hLX, hconv ⟩ ⟩ := ((Heine_Borel X).mp ⟨ hXclosed, hXbounded ⟩) x haX
   have why (j:ℕ) : n j ≥ j := why_7_6_3 hn j
   replace hf := hf.continuousWithinAt hLX
@@ -66,7 +66,7 @@ theorem BddOn.of_continuous_on_compact {a b:ℝ} (h:a < b) {f:ℝ → ℝ} (hf: 
   apply Metric.isBounded_range_of_tendsto at hf
   rw [isBounded_def] at hf; choose M hpos hM using hf
   choose j hj using exists_nat_gt M
-  replace hx := (hx (n j)).2.2
+  replace hx := (hx (n j)).2
   replace hM : f (x (n j)) ∈ Set.Icc (-M) M := by grind
   simp [←abs_le] at hM
   have : n j ≥ (j:ℝ) := by simp [why j]

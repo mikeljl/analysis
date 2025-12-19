@@ -66,6 +66,7 @@ theorem Sequence.lim_of_power_decay {k:ℕ} :
     simp only [HPow.hPow, Pow.pow, a]; split_ifs with h <;> simp
     rw [←Real.rpow_natCast,←Real.rpow_mul (by positivity)]
     convert Real.rpow_one _; field_simp
+    simp
   simp [lim_eq, ha', pow_eq_zero hlim]
 
 /-- Lemma 6.5.2 / Exercise 6.5.2 -/
