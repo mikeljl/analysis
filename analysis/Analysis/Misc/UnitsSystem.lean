@@ -1,6 +1,7 @@
 import Mathlib.Tactic
 import Mathlib.Algebra.Group.InjSurj
 import Mathlib.Order.Defs.PartialOrder
+import Mathlib.Algebra.Order.Module.OrderedSMul
 
 /-! A framework to formalize units (such as length, time, mass, velocity, etc.) in Lean.
 -/
@@ -238,7 +239,6 @@ theorem Scalar.toFormal_smul {d:Dimensions} (c:ℝ) (q:Scalar d)
 theorem Formal.smul_eq_mul (c:ℝ) (x:Formal) : c • x = (c:Formal) * x := by
   ext n
   simp [Scalar.toFormal]
-  rw [Finsupp.smul_apply, AddMonoidAlgebra.single_zero_mul_apply, _root_.smul_eq_mul]
 
 @[simp]
 theorem Formal.smul_eq_mul' (c:ℕ) (x:Formal) : c • x = (c:Formal) * x := by
